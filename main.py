@@ -1,6 +1,10 @@
 import functions_framework
+from vertexai.preview import reasoning_engines
 import vertexai
 from vertexai import agent_engines
+import uuid
+import json
+import re
 
 PROJECT_ID = "sahayakai-466115"
 LOCATION = "us-east4"
@@ -11,6 +15,16 @@ vertexai.init(
     location=LOCATION,
     staging_bucket=STAGING_BUCKET,
 )
+
+def extract_json_from_markdown(text):
+    match = re.search(r"⁠  json\s*(\{.*?\})\s*  ⁠", text, re.DOTALL)
+    if match:
+        json_str = match.group(1)
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError:
+            print("Invalid JSON found.")
+    return None
 
 @functions_framework.http
 def answer_from_textbook(request):
@@ -32,7 +46,30 @@ def answer_from_textbook(request):
 
     # Set CORS headers for the main request
     headers = {"Access-Control-Allow-Origin": "*"}
+    prompt = None
+    try:
+        request_json = request.get_json(silent=True)
+        user_query = request_json.get("user_query", "")
+        language = request_json.get("language", "")
+        prompt = f"{user_query}\n**Answer must be in {language}**"
+    except Exception as e:
+        return (f"Invalid request body: {e}", 400, headers)
     agent = agent_engines.get('projects/522049177242/locations/us-east4/reasoningEngines/6527263972431757312')
-    agent.query(input="Tell a complete story of hecko in English")
+    app = reasoning_engines.AdkApp(
+        agent=agent,
+        enable_tracing=True,
+    )
+    user_id = f"{uuid.uuid4().hex}"
+    session = app.create_session(user_id=user_id)
+    events = []
+    for event in app.stream_query(
+        user_id=user_id,
+        session_id=session.id,
+        message="Tell me complete story about hecko in English",
+    ): events.append(event)
 
-    return ("Hello World!", 200, headers)
+    response_event = events[-1]
+    response_text = response_event['content']['parts'][0]['text']
+    response_json = extract_json_from_markdown(response_text)
+
+    return (json.dumps(response_json), 200, headers)

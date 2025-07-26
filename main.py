@@ -49,7 +49,7 @@ def answer_from_textbook(request):
         return ("", 204, headers)
 
     # Set CORS headers for the main request
-    headers = {"Access-Control-Allow-Origin": "*"}
+    headers = {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"}
     prompt = None
     try:
         request_json = request.get_json(silent=True)
@@ -82,4 +82,4 @@ def answer_from_textbook(request):
     response_json = extract_json_from_markdown(response_text)
     print(response_json)
 
-    return (json.dumps(response_json), 200, headers)
+    return (response_json, 200, headers)

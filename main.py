@@ -55,19 +55,20 @@ def answer_from_textbook(request):
         prompt = f"{user_query}\n**Answer must be in {language}**"
     except Exception as e:
         return (f"Invalid request body: {e}", 400, headers)
-    agent = agent_engines.get('projects/522049177242/locations/us-east4/reasoningEngines/6527263972431757312')
+    agent = agent_engines.get('projects/522049177242/locations/us-east4/reasoningEngines/6527263972431757312')    
+    agent.operation_schemas()
     print(f"Using agent: {agent.name}")
     app = reasoning_engines.AdkApp(
         agent=agent,
         enable_tracing=True,
     )
     user_id = str(uuid.uuid4())
-    session = app.create_session(user_id=user_id)
+    session = agent.create_session(user_id=user_id)
     events = []
-    for event in app.stream_query(
+    for event in agent.run_async(
         user_id=user_id,
         session_id=session.id,
-        message=prompt,
+        new_message=prompt,
     ): events.append(event)
 
     response_event = events[-1]

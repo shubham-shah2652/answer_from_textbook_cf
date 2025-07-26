@@ -56,7 +56,7 @@ def answer_from_textbook(request):
     except Exception as e:
         return (f"Invalid request body: {e}", 400, headers)
     agent = agent_engines.get('projects/522049177242/locations/us-east4/reasoningEngines/6527263972431757312')    
-    agent.operation_schemas()
+    print(agent.operation_schemas())
     print(f"Using agent: {agent.name}")
     app = reasoning_engines.AdkApp(
         agent=agent,

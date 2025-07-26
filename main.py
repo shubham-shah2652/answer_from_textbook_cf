@@ -62,7 +62,7 @@ def answer_from_textbook(request):
     user_id = str(uuid.uuid4())
     session = agent.create_session(user_id=user_id)
     events = []
-    for event in agent.async_stream(
+    for event in agent.async_stream_query(
         user_id=user_id,
         session_id=session.id,
         message=prompt,

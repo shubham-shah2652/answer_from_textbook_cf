@@ -49,23 +49,25 @@ def answer_from_textbook(request):
     prompt = None
     try:
         request_json = request.get_json(silent=True)
+        print(f"Request JSON: {request_json}")
         user_query = request_json.get("user_query", "")
         language = request_json.get("language", "")
         prompt = f"{user_query}\n**Answer must be in {language}**"
     except Exception as e:
         return (f"Invalid request body: {e}", 400, headers)
     agent = agent_engines.get('projects/522049177242/locations/us-east4/reasoningEngines/6527263972431757312')
+    print(f"Using agent: {agent.name}")
     app = reasoning_engines.AdkApp(
         agent=agent,
         enable_tracing=True,
     )
-    user_id = f"{uuid.uuid4().hex}"
+    user_id = str(uuid.uuid4())
     session = app.create_session(user_id=user_id)
     events = []
     for event in app.stream_query(
         user_id=user_id,
         session_id=session.id,
-        message="Tell me complete story about hecko in English",
+        message=prompt,
     ): events.append(event)
 
     response_event = events[-1]

@@ -58,17 +58,14 @@ def answer_from_textbook(request):
     agent = agent_engines.get('projects/522049177242/locations/us-east4/reasoningEngines/6527263972431757312')    
     print(agent.operation_schemas())
     print(f"Using agent: {agent.name}")
-    app = reasoning_engines.AdkApp(
-        agent=agent,
-        enable_tracing=True,
-    )
+    
     user_id = str(uuid.uuid4())
     session = agent.create_session(user_id=user_id)
     events = []
-    for event in agent.run_async(
+    for event in agent.async_stream(
         user_id=user_id,
         session_id=session.id,
-        new_message=prompt,
+        message=prompt,
     ): events.append(event)
 
     response_event = events[-1]

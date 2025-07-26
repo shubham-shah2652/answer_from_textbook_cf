@@ -17,14 +17,18 @@ vertexai.init(
 )
 
 def extract_json_from_markdown(text):
-    match = re.search(r"⁠  json\s*(\{.*?\})\s*  ⁠", text, re.DOTALL)
-    if match:
-        json_str = match.group(1)
-        try:
-            return json.loads(json_str)
-        except json.JSONDecodeError:
-            print("Invalid JSON found.")
-    return None
+    pattern = r"```json\s*(\{.*?\})\s*```"
+    match = re.search(pattern, text, re.DOTALL)
+    
+    if not match:
+        raise ValueError("No JSON code block found in the Markdown.")
+    
+    json_str = match.group(1)
+    
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON: {e}")
 
 @functions_framework.http
 def answer_from_textbook(request):
